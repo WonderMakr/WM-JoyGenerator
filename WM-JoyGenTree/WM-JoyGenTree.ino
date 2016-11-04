@@ -52,6 +52,8 @@
 
 #define VERSIONSTR "1.0"
 
+#define MYTREENUMBER 1
+
 #define DEBUG 1
 
 #define PIN 6
@@ -69,10 +71,13 @@
 byte ctrlAddr[][6] = { "1Ctrl", "2Ctrl" };
 byte treeAddr[][6] = { "1Tree", "2Tree", "3Tree" };
 
-uint8_t myTreeNumber = 2;
-
 RF24 radio(9, 10);
+
+#if MYTREENUMBER == 1
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(150, PIN, NEO_RGB + NEO_KHZ800);
+#else
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(100, PIN, NEO_RGB + NEO_KHZ800);
+#endif
 
 uint8_t animationNumber = 0;
 uint32_t param1 = PARAM1_DEFAULT;
@@ -151,7 +156,7 @@ void idleAnimation()
     prepared = true;
     lastTime = millis();
   }
-
+/*
   if ((millis() - lastTime) > IDLENEXTSPARKLETIME)
   {
     strip.setPixelColor(lastSparklePixel, IDLECOLOUR);
@@ -160,63 +165,11 @@ void idleAnimation()
     strip.show();
     lastTime = millis();
   }
-
+*/
 }
 
 
-// Animation 0: light chase
-// Param 1: colour
-// Param 2: speed
-// Param 3: secondary colour
-
-void prepareAnimation0()
-{
-  strip.clear();
-  strip.show();
-}
-
-
-void animation0()
-{
-  static uint32_t lastTime = 0;
-  static uint8_t lastPixel = 0;
-  static bool odd = false;
-  uint32_t colour;
-
-  if (!prepared)
-  {
-    prepareAnimation0();
-    prepared = true;
-    lastTime = millis();
-    lastPixel = 0;
-  }
-
-  if ((millis() - lastTime) > param2)
-  {
-    lastPixel = lastPixel + 1;
-    if (lastPixel == strip.numPixels())
-    {
-      lastPixel = 0;
-      odd = !odd;
-    }
-
-    fadeAll(0.85);
-    if (odd)
-    {
-      colour = param1;
-    }
-    else
-    {
-      colour = param3;
-    }
-    strip.setPixelColor(lastPixel, colour);
-    strip.show();
-    lastTime = millis();
-  }
-}
-
-
-// Animation 1: dual light chase
+// Animation 1: Barber pole - 8 Bit
 // Param 1: colour
 // Param 2: speed
 // Param 3: secondary colour
@@ -224,7 +177,6 @@ void animation0()
 void prepareAnimation1()
 {
   strip.clear();
-
   strip.show();
 }
 
@@ -233,6 +185,9 @@ void animation1()
 {
   static uint32_t lastTime = 0;
   static uint8_t lastPixel = 0;
+  static bool odd = false;
+  uint32_t colour = param1;
+  uint32_t midPixelColour = param2;
 
   if (!prepared)
   {
@@ -245,10 +200,65 @@ void animation1()
   if ((millis() - lastTime) > param2)
   {
     lastPixel = lastPixel + 1;
+    if (lastPixel == strip.numPixels() / 2)
+    {
+      lastPixel = 0;
+      odd = !odd;
+    }
+
+    fadeAll(0.965);
+    if (odd)
+    {
+      colour = param1;
+      midPixelColour = param3;
+    }
+    else
+    {
+      colour = param3;
+      midPixelColour = param1;
+    }
+    uint8_t midPixel = strip.numPixels() / 2 + lastPixel;
+    strip.setPixelColor(midPixel, midPixelColour);
+    strip.setPixelColor(lastPixel, colour);
+    strip.show();
+    lastTime = millis();
+  }
+}
+
+
+// Animation 3: Barber Pole - 64 Bit
+// Param 1: colour
+// Param 2: speed
+// Param 3: secondary colour
+
+void prepareAnimation3()
+{
+  strip.clear();
+
+  strip.show();
+}
+
+
+void animation3()
+{
+  static uint32_t lastTime = 0;
+  static uint8_t lastPixel = 0;
+
+  if (!prepared)
+  {
+    prepareAnimation3();
+    prepared = true;
+    lastTime = millis();
+    lastPixel = 0;
+  }
+
+  if ((millis() - lastTime) > param2)
+  {
+    lastPixel = lastPixel + 1;
     if (lastPixel == strip.numPixels())
       lastPixel = 0;
 
-    fadeAll(0.85);
+    fadeAll(0.965);
     strip.setPixelColor(lastPixel, param1);
     strip.setPixelColor(strip.numPixels() - lastPixel - 1, param3);
     strip.show();
@@ -283,7 +293,7 @@ void animation2()
 
   if ((millis() - lastTime) > param2)
   {
-    fadeAll(0.85);
+    fadeAll(0.98);
     odd = !odd;
     if (odd)
     {
@@ -299,19 +309,19 @@ void animation2()
 }
 
 
-// Animation 3: Alternating colours
+// Animation 4: Alternating colours
 // Param 1: colour
 // Param 2: speed
 // Param 3: secondary colour
 
-void prepareAnimation3()
+void prepareAnimation4()
 {
   strip.clear();
   strip.show();
 }
 
 
-void animation3()
+void animation4()
 {
   static uint32_t lastTime = 0;
   static uint8_t fadeCount = 0;
@@ -321,16 +331,16 @@ void animation3()
 
   if (!prepared)
   {
-    prepareAnimation3();
+    prepareAnimation4();
     prepared = true;
     lastTime = millis();
   }
 
-  if ((millis() - lastTime) > (param2 * 10))
+  if ((millis() - lastTime) > param2)
   {
-    fadeAll(0.85);
+//    fadeAll(0.95);
     fadeCount++;
-    if (fadeCount >= 4)
+    if (fadeCount >= 20)
     {
       fadeCount = 0;
       odd = !odd;
@@ -363,33 +373,33 @@ void animation3()
 }
 
 
-// Animation 4: fill tree from bottom to top
+// Animation 5: fill tree from bottom to top
 // Param 1: colour
 // Param 2: speed
 // Param 3: secondary colour
 
-void prepareAnimation4()
+void prepareAnimation5()
 {
   strip.clear();
   strip.show();
 }
 
 
-void animation4()
+void animation5()
 {
   static uint32_t lastTime = 0;
   static uint8_t lastPixel = 0;
-  static uint8_t fadeCount = 0;  // Number of passes to fade, before beginning again
+//  static uint8_t fadeCount = 0;  // Number of passes to fade, before beginning again
   static bool odd = false;
   uint32_t colour;
 
   if (!prepared)
   {
-    prepareAnimation4();
+    prepareAnimation5();
     prepared = true;
     lastTime = millis();
     lastPixel = 0;
-    fadeCount = 0;
+//    fadeCount = 0;
   }
 
   if ((millis() - lastTime) > param2)
@@ -409,16 +419,16 @@ void animation4()
     }
     else
     {
-      fadeCount++;
-      fadeAll(0.85);
-      if (fadeCount >= 10)
-      {
+//      fadeCount++;
+//      fadeAll(0.85);
+//      if (fadeCount >= 10)
+//      {
         // reset and begin again
-        fadeCount = 0;
+//        fadeCount = 0;
         lastPixel = 0;
-        strip.clear();
+//        strip.clear();
         odd = !odd;
-      }
+//      }
     }
     strip.show();
     lastTime = millis();
@@ -426,33 +436,33 @@ void animation4()
 }
 
 
-// Animation 5: fill tree from top to bottom
+// Animation 0: fill tree from top to bottom
 // Param 1: colour
 // Param 2: speed
 // Param 3: secondary colour
 
-void prepareAnimation5()
+void prepareAnimation0()
 {
   strip.clear();
   strip.show();
 }
 
 
-void animation5()
+void animation0()
 {
   static uint32_t lastTime = 0;
   static uint8_t lastPixel = 0;
-  static uint8_t fadeCount = 0;  // Number of passes to fade, before beginning again
+//  static uint8_t fadeCount = 0;  // Number of passes to fade, before beginning again
   static bool odd = false;
   uint32_t colour;
 
   if (!prepared)
   {
-    prepareAnimation5();
+    prepareAnimation0();
     prepared = true;
     lastTime = millis();
     lastPixel = 0;
-    fadeCount = 0;
+//    fadeCount = 0;
   }
 
   if ((millis() - lastTime) > param2)
@@ -472,16 +482,16 @@ void animation5()
     }
     else
     {
-      fadeCount++;
-      fadeAll(0.85);
-      if (fadeCount >= 10)
-      {
+//      fadeCount++;
+//      fadeAll(0.85);
+//      if (fadeCount >= 10)
+//      {
         // reset and begin again
-        fadeCount = 0;
+//        fadeCount = 0;
         lastPixel = 0;
-        strip.clear();
+//        strip.clear();
         odd = !odd;
-      }
+//      }
     }
     strip.show();
     lastTime = millis();
@@ -528,7 +538,7 @@ void setup()
   Serial.begin(115200);
   Serial.println(F("JoyGen -- Tree/Receiver V" VERSIONSTR));
   Serial.print(F("My tree number: "));
-  Serial.println(myTreeNumber);
+  Serial.println(MYTREENUMBER);
 
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
@@ -538,7 +548,7 @@ void setup()
   radio.setPALevel(RF24_PA_MIN);
 
   radio.openWritingPipe(ctrlAddr[0]);
-  radio.openReadingPipe(1, treeAddr[myTreeNumber]);
+  radio.openReadingPipe(1, treeAddr[MYTREENUMBER]);
 
   radio.startListening();
 
