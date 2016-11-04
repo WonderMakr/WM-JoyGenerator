@@ -50,7 +50,7 @@
 #include "RF24.h"
 #include <Adafruit_NeoPixel.h>
 
-#define VERSIONSTR "1.0"
+#define VERSIONSTR "1.1"
 
 #define MYTREENUMBER 1
 
@@ -60,7 +60,7 @@
 
 #define IDLETIMEOUT 30000L
 
-#define IDLECOLOUR 0x505050
+#define IDLECOLOUR 0x505020
 #define IDLESPARKLECOLOUR 0xffffff
 #define IDLENEXTSPARKLETIME 50
 
@@ -73,11 +73,7 @@ byte treeAddr[][6] = { "1Tree", "2Tree", "3Tree" };
 
 RF24 radio(9, 10);
 
-#if MYTREENUMBER == 1
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(150, PIN, NEO_RGB + NEO_KHZ800);
-#else
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(100, PIN, NEO_RGB + NEO_KHZ800);
-#endif
 
 uint8_t animationNumber = 0;
 uint32_t param1 = PARAM1_DEFAULT;
@@ -169,7 +165,7 @@ void idleAnimation()
 }
 
 
-// Animation 1: Barber pole - 8 Bit
+// Animation 1: Barber pole - 64 Bit
 // Param 1: colour
 // Param 2: speed
 // Param 3: secondary colour
@@ -181,52 +177,46 @@ void prepareAnimation1()
 }
 
 
+void shiftAllUp30()
+{
+  for (int i = strip.numPixels() - 1; i > 29; i--)
+  {
+    strip.setPixelColor(i, strip.getPixelColor(i - 30));
+  }
+}
+
+
 void animation1()
 {
   static uint32_t lastTime = 0;
-  static uint8_t lastPixel = 0;
-  static bool odd = false;
-  uint32_t colour = param1;
-  uint32_t midPixelColour = param2;
+  static uint8_t lastColour = 0;
+  uint32_t colourSet[] = { param1, IDLECOLOUR, param3, IDLECOLOUR };
 
   if (!prepared)
   {
     prepareAnimation1();
     prepared = true;
     lastTime = millis();
-    lastPixel = 0;
+    lastColour = 0;
   }
 
-  if ((millis() - lastTime) > param2)
+  if ((millis() - lastTime) > param2 * 10 + 100)
   {
-    lastPixel = lastPixel + 1;
-    if (lastPixel == strip.numPixels() / 2)
+    shiftAllUp30();
+    for (int i = 0; i < 30; i++)
     {
-      lastPixel = 0;
-      odd = !odd;
+      strip.setPixelColor(i, colourSet[lastColour]);
     }
-
-    fadeAll(0.965);
-    if (odd)
-    {
-      colour = param1;
-      midPixelColour = param3;
-    }
-    else
-    {
-      colour = param3;
-      midPixelColour = param1;
-    }
-    uint8_t midPixel = strip.numPixels() / 2 + lastPixel;
-    strip.setPixelColor(midPixel, midPixelColour);
-    strip.setPixelColor(lastPixel, colour);
     strip.show();
+    lastColour++;
+    if (lastColour > 3)
+      lastColour = 0;
     lastTime = millis();
   }
 }
 
 
-// Animation 3: Barber Pole - 64 Bit
+// Animation 3: Barber Pole - 8 Bit
 // Param 1: colour
 // Param 2: speed
 // Param 3: secondary colour
@@ -239,29 +229,44 @@ void prepareAnimation3()
 }
 
 
+void shiftAllUp()
+{
+  for (int i = strip.numPixels() - 1; i > 0; i--)
+  {
+    strip.setPixelColor(i, strip.getPixelColor(i - 1));
+  }
+}
+
+
 void animation3()
 {
   static uint32_t lastTime = 0;
-  static uint8_t lastPixel = 0;
+  static uint8_t lastColour = 0;
+  static uint8_t paintCount = 0;
+  uint32_t colourSet[] = { param1, IDLECOLOUR, param3, IDLECOLOUR };
 
   if (!prepared)
   {
     prepareAnimation3();
     prepared = true;
     lastTime = millis();
-    lastPixel = 0;
+    lastColour = 0;
+    paintCount = 0;
   }
 
   if ((millis() - lastTime) > param2)
   {
-    lastPixel = lastPixel + 1;
-    if (lastPixel == strip.numPixels())
-      lastPixel = 0;
-
-    fadeAll(0.965);
-    strip.setPixelColor(lastPixel, param1);
-    strip.setPixelColor(strip.numPixels() - lastPixel - 1, param3);
+    shiftAllUp();
+    strip.setPixelColor(0, colourSet[lastColour]);
     strip.show();
+    paintCount++;
+    if (paintCount > 50)
+    {
+      paintCount = 0;
+      lastColour++;
+      if (lastColour > 3)
+        lastColour = 0;
+    }
     lastTime = millis();
   }
 }
