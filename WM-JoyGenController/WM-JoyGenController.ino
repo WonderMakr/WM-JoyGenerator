@@ -34,6 +34,26 @@
 ||
 || @notes
 || |
+|| | 3 x buttons, 1 x dial (with 6 x switches), 1 x lever (with 6 x switches)
+|| | all switches are using a LitSwitch configuration -- 5v -> 330R -> i/o -> 330R -> GND
+|| |
+|| | Control   Pin
+|| | Button1   0
+|| | Button2   1
+|| | Button3   2
+|| | Lever1    3
+|| | Lever2    4
+|| | Lever3    5
+|| | Lever4    6
+|| | Lever5    7
+|| | Lever6    8
+|| | Dial1     14
+|| | Dial2     15
+|| | Dial3     16
+|| | Dial4     17
+|| | Dial5     18
+|| | Dial6     19
+|| |
 || | Protocol:
 || |
 || | CMDs
@@ -49,17 +69,65 @@
 
 #include <SPI.h>
 #include "RF24.h"
+#include "LitSwitch.h"
 
-#define VERSIONSTR "1.0"
+#define VERSIONSTR "1.1"
 
-#define DEBUG 1
+#define DEBUG 0
+
+#define PIN_BUTTON1   0
+#define PIN_BUTTON2   1
+#define PIN_BUTTON3   2
+#define PIN_LEVER1    3
+#define PIN_LEVER2    4
+#define PIN_LEVER3    5
+#define PIN_LEVER4    6
+#define PIN_LEVER5    7
+#define PIN_LEVER6    8
+#define PIN_DIAL1     14
+#define PIN_DIAL2     15
+#define PIN_DIAL3     16
+#define PIN_DIAL4     17
+#define PIN_DIAL5     18
+#define PIN_DIAL6     19
+
+#define COLOURCOUNT 6
+
+#define INDEX_BUTTON1 0
+#define INDEX_BUTTON2 1
+#define INDEX_BUTTON3 2
+#define INDEX_LEVER   3
+#define INDEX_DIAL    4
 
 byte ctrlAddr[][6] = { "1Ctrl", "2Ctrl" };
 byte treeAddr[][6] = { "1Tree", "2Tree", "3Tree" };
 
-uint8_t myControllerNumber = 0;
+byte controlToTree[2][5] = { { 0, 0, 1, 0, 0 },
+                             { 1, 1, 2, 2, 2 } };
+
+uint32_t primaryColour[] = { 0xFF0000, 0xFFFF00, 0x00FFFF, 0x0000FF, 0x00FF00, 0x993311 };
+uint32_t secondaryColour[] = { 0x110099, 0x123456, 0xCC9900, 0xE100CC, 0xC9C901, 0xFF0C0C };
+
+uint8_t myControllerNumber = 1;
 
 RF24 radio(9, 10);
+
+LitSwitch button1 = LitSwitch(PIN_BUTTON1, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch button2 = LitSwitch(PIN_BUTTON2, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch button3 = LitSwitch(PIN_BUTTON3, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch lever1 = LitSwitch(PIN_LEVER1, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch lever2 = LitSwitch(PIN_LEVER2, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch lever3 = LitSwitch(PIN_LEVER3, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch lever4 = LitSwitch(PIN_LEVER4, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch lever5 = LitSwitch(PIN_LEVER5, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch lever6 = LitSwitch(PIN_LEVER6, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch dial1 = LitSwitch(PIN_DIAL1, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch dial2 = LitSwitch(PIN_DIAL2, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch dial3 = LitSwitch(PIN_DIAL3, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch dial4 = LitSwitch(PIN_DIAL4, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch dial5 = LitSwitch(PIN_DIAL5, CATHODE, PULLUP_INTERNAL, 50);
+LitSwitch dial6 = LitSwitch(PIN_DIAL6, CATHODE, PULLUP_INTERNAL, 50);
+
 
 /**
 * Create a data structure for transmitting and receiving data
@@ -113,12 +181,127 @@ Serial.print(treeNumber);
 }
 
 
+void onPressButton1(LitSwitch *btn)
+{
+  static uint8_t primaryColourIndex = 0;
+
+  writeToTree(controlToTree[myControllerNumber][INDEX_BUTTON1], 'a', primaryColour[primaryColourIndex]);
+  primaryColourIndex++;
+  if (primaryColourIndex >= COLOURCOUNT)
+    primaryColourIndex = 0;
+}
+
+
+void onPressButton2(LitSwitch *btn)
+{
+  static uint8_t secondaryColourIndex = 0;
+
+  writeToTree(controlToTree[myControllerNumber][INDEX_BUTTON2], 'a', secondaryColour[secondaryColourIndex]);
+  secondaryColourIndex++;
+  if (secondaryColourIndex >= COLOURCOUNT)
+    secondaryColourIndex = 0;
+}
+
+
+void setAnimation(uint8_t treeNumber, uint8_t animationNumber)
+{
+  writeToTree(treeNumber, 'A', animationNumber);
+}
+
+
+void setSpeed(uint8_t treeNumber, uint8_t speed)
+{
+  writeToTree(treeNumber, 'b', speed);
+}
+
+
+void onPressDial1(LitSwitch *btn)
+{
+  setSpeed(controlToTree[myControllerNumber][INDEX_DIAL], 1);
+}
+
+void onPressDial2(LitSwitch *btn)
+{
+  setSpeed(controlToTree[myControllerNumber][INDEX_DIAL], 4);
+}
+
+void onPressDial3(LitSwitch *btn)
+{
+  setSpeed(controlToTree[myControllerNumber][INDEX_DIAL], 8);
+}
+
+void onPressDial4(LitSwitch *btn)
+{
+  setSpeed(controlToTree[myControllerNumber][INDEX_DIAL], 15);
+}
+
+void onPressDial5(LitSwitch *btn)
+{
+  setSpeed(controlToTree[myControllerNumber][INDEX_DIAL], 20);
+}
+
+void onPressDial6(LitSwitch *btn)
+{
+  setSpeed(controlToTree[myControllerNumber][INDEX_DIAL], 30);
+}
+
+
+void onPressLever1(LitSwitch *btn)
+{
+  setAnimation(controlToTree[myControllerNumber][INDEX_LEVER], 0);
+}
+
+void onPressLever2(LitSwitch *btn)
+{
+  setAnimation(controlToTree[myControllerNumber][INDEX_LEVER], 1);
+}
+
+void onPressLever3(LitSwitch *btn)
+{
+  setAnimation(controlToTree[myControllerNumber][INDEX_LEVER], 2);
+}
+
+void onPressLever4(LitSwitch *btn)
+{
+  setAnimation(controlToTree[myControllerNumber][INDEX_LEVER], 3);
+}
+
+void onPressLever5(LitSwitch *btn)
+{
+  setAnimation(controlToTree[myControllerNumber][INDEX_LEVER], 4);
+}
+
+void onPressLever6(LitSwitch *btn)
+{
+  setAnimation(controlToTree[myControllerNumber][INDEX_LEVER], 5);
+}
+
 void setup()
 {
+#if DEBUG
   Serial.begin(115200);
   Serial.println(F("JoyGen -- Controller V" VERSIONSTR));
   Serial.print(F("My controller number: "));
   Serial.println(myControllerNumber);
+#endif
+
+  button1.onPress = onPressButton1;
+  button2.onPress = onPressButton2;
+//  button3.onPress = onPressButton3;  // TODO
+
+  dial1.onPress = onPressDial1;
+  dial2.onPress = onPressDial2;
+  dial3.onPress = onPressDial3;
+  dial4.onPress = onPressDial4;
+  dial5.onPress = onPressDial5;
+  dial6.onPress = onPressDial6;
+
+  lever1.onPress = onPressLever1;
+  lever2.onPress = onPressLever2;
+  lever3.onPress = onPressLever3;
+  lever4.onPress = onPressLever4;
+  lever5.onPress = onPressLever5;
+  lever6.onPress = onPressLever6;
 
   radio.begin();
 
@@ -133,6 +316,10 @@ void setup()
 
 void loop()
 {
+
+  LitSwitch::updateAll();
+
+/*
   uint16_t reading;
   static uint32_t lastTime = 0;
   static uint16_t lastReading = 0;
@@ -214,6 +401,6 @@ void loop()
         break;
     }
   }
-
+*/
 }
 
