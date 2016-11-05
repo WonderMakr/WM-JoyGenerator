@@ -52,15 +52,15 @@
 
 #define VERSIONSTR "1.1"
 
-#define MYTREENUMBER 1
+#define MYTREENUMBER 0
 
 #define DEBUG 1
 
 #define PIN 6
 
-#define IDLETIMEOUT 30000L
+#define IDLETIMEOUT 20000L
 
-#define IDLECOLOUR 0x505020
+#define IDLECOLOUR 0x706010
 #define IDLESPARKLECOLOUR 0xffffff
 #define IDLENEXTSPARKLETIME 50
 
@@ -238,6 +238,15 @@ void shiftAllUp()
 }
 
 
+void shiftAllDown()
+{
+  for (int i = 0; i < strip.numPixels() - 1; i++)
+  {
+    strip.setPixelColor(i, strip.getPixelColor(i + 1));
+  }
+}
+
+
 void animation3()
 {
   static uint32_t lastTime = 0;
@@ -256,8 +265,8 @@ void animation3()
 
   if ((millis() - lastTime) > param2)
   {
-    shiftAllUp();
-    strip.setPixelColor(0, colourSet[lastColour]);
+    shiftAllDown();
+    strip.setPixelColor(strip.numPixels() - 1, colourSet[lastColour]);
     strip.show();
     paintCount++;
     if (paintCount > 50)
@@ -378,19 +387,19 @@ void animation4()
 }
 
 
-// Animation 5: fill tree from bottom to top
+// Animation 0: fill tree from bottom to top
 // Param 1: colour
 // Param 2: speed
 // Param 3: secondary colour
 
-void prepareAnimation5()
+void prepareAnimation0()
 {
   strip.clear();
   strip.show();
 }
 
 
-void animation5()
+void animation0()
 {
   static uint32_t lastTime = 0;
   static uint8_t lastPixel = 0;
@@ -400,7 +409,7 @@ void animation5()
 
   if (!prepared)
   {
-    prepareAnimation5();
+    prepareAnimation0();
     prepared = true;
     lastTime = millis();
     lastPixel = 0;
@@ -441,19 +450,19 @@ void animation5()
 }
 
 
-// Animation 0: fill tree from top to bottom
+// Animation 5: fill tree from top to bottom
 // Param 1: colour
 // Param 2: speed
 // Param 3: secondary colour
 
-void prepareAnimation0()
+void prepareAnimation5()
 {
   strip.clear();
   strip.show();
 }
 
 
-void animation0()
+void animation5()
 {
   static uint32_t lastTime = 0;
   static uint8_t lastPixel = 0;
@@ -463,7 +472,7 @@ void animation0()
 
   if (!prepared)
   {
-    prepareAnimation0();
+    prepareAnimation5();
     prepared = true;
     lastTime = millis();
     lastPixel = 0;
