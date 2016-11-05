@@ -71,7 +71,9 @@
 #include "RF24.h"
 #include "LitSwitch.h"
 
-#define VERSIONSTR "1.1"
+#define VERSIONSTR "1.2"
+
+#define MYCONTROLLERNUMBER 0
 
 #define DEBUG 0
 
@@ -91,7 +93,7 @@
 #define PIN_DIAL5     18
 #define PIN_DIAL6     19
 
-#define COLOURCOUNT 6
+#define COLOURCOUNT 3
 
 #define INDEX_BUTTON1 0
 #define INDEX_BUTTON2 1
@@ -102,13 +104,20 @@
 byte ctrlAddr[][6] = { "1Ctrl", "2Ctrl" };
 byte treeAddr[][6] = { "1Tree", "2Tree", "3Tree" };
 
-byte controlToTree[2][5] = { { 0, 0, 1, 0, 0 },
-                             { 1, 1, 2, 2, 2 } };
+byte controlToTree[2][5] = { { 0, 0, 1, 0, 1 },
+                             { 1, 2, 2, 2, 2 } };
+//0x5D00B2 - purple
+//0xB21700 - red
+//0xFFDD00 - yellow
+//0xFF6D00 - orange
+//0x004EB2 - blue
+//0x51FF00 - green
+//
+uint32_t primaryColour[] = { 0xFF0000, 0xB21700, 0xFF6D00, 0x0000FF, 0x00FF00, 0x993311 };
+uint32_t secondaryColour[] = { 0x5D00B2, 0x004EB2, 0x51FF00, 0xE100CC, 0xC9C901, 0xFF0C0C };
 
-uint32_t primaryColour[] = { 0xFF0000, 0xFFFF00, 0x00FFFF, 0x0000FF, 0x00FF00, 0x993311 };
-uint32_t secondaryColour[] = { 0x110099, 0x123456, 0xCC9900, 0xE100CC, 0xC9C901, 0xFF0C0C };
-
-uint8_t myControllerNumber = 1;
+// uint8_t speeds[] = { 1, 4, 8, 15, 20, 30 };
+uint8_t speeds[] = { 30, 20, 15, 8, 4, 1 };
 
 RF24 radio(9, 10);
 
@@ -183,23 +192,55 @@ Serial.print(treeNumber);
 
 void onPressButton1(LitSwitch *btn)
 {
-  static uint8_t primaryColourIndex = 0;
+  static uint8_t colourIndex = 0;
+  uint32_t colour;
 
-  writeToTree(controlToTree[myControllerNumber][INDEX_BUTTON1], 'a', primaryColour[primaryColourIndex]);
-  primaryColourIndex++;
-  if (primaryColourIndex >= COLOURCOUNT)
-    primaryColourIndex = 0;
+#if MYCONTROLLERNUMBER == 0
+  colour = primaryColour[colourIndex];
+  writeToTree(controlToTree[MYCONTROLLERNUMBER][INDEX_BUTTON1], 'a', colour);
+#else
+  colour = secondaryColour[colourIndex];
+  writeToTree(controlToTree[MYCONTROLLERNUMBER][INDEX_BUTTON1], 'c', colour);
+#endif
+  colourIndex++;
+  if (colourIndex >= COLOURCOUNT)
+    colourIndex = 0;
 }
 
 
 void onPressButton2(LitSwitch *btn)
 {
-  static uint8_t secondaryColourIndex = 0;
+  static uint8_t colourIndex = 0;
+  uint32_t colour;
 
-  writeToTree(controlToTree[myControllerNumber][INDEX_BUTTON2], 'a', secondaryColour[secondaryColourIndex]);
-  secondaryColourIndex++;
-  if (secondaryColourIndex >= COLOURCOUNT)
-    secondaryColourIndex = 0;
+#if MYCONTROLLERNUMBER == 0
+  colour = secondaryColour[colourIndex];
+  writeToTree(controlToTree[MYCONTROLLERNUMBER][INDEX_BUTTON2], 'c', colour);
+#else
+  colour = primaryColour[colourIndex];
+  writeToTree(controlToTree[MYCONTROLLERNUMBER][INDEX_BUTTON2], 'a', colour);
+#endif
+  colourIndex++;
+  if (colourIndex >= COLOURCOUNT)
+    colourIndex = 0;
+}
+
+
+void onPressButton3(LitSwitch *btn)
+{
+  static uint8_t colourIndex = 0;
+  uint32_t colour;
+
+#if MYCONTROLLERNUMBER == 0
+  colour = primaryColour[colourIndex];
+  writeToTree(controlToTree[MYCONTROLLERNUMBER][INDEX_BUTTON3], 'a', colour);
+#else
+  colour = secondaryColour[colourIndex];
+  writeToTree(controlToTree[MYCONTROLLERNUMBER][INDEX_BUTTON3], 'c', colour);
+#endif
+  colourIndex++;
+  if (colourIndex >= COLOURCOUNT)
+    colourIndex = 0;
 }
 
 
@@ -217,63 +258,99 @@ void setSpeed(uint8_t treeNumber, uint8_t speed)
 
 void onPressDial1(LitSwitch *btn)
 {
-  setSpeed(controlToTree[myControllerNumber][INDEX_DIAL], 1);
+#if MYCONTROLLERNUMBER == 0
+  setAnimation(controlToTree[MYCONTROLLERNUMBER][INDEX_DIAL], 0);
+#else
+  setSpeed(0, speeds[0]);
+  setSpeed(1, speeds[0]);
+  setSpeed(2, speeds[0]);
+#endif
 }
 
 void onPressDial2(LitSwitch *btn)
 {
-  setSpeed(controlToTree[myControllerNumber][INDEX_DIAL], 4);
+#if MYCONTROLLERNUMBER == 0
+  setAnimation(controlToTree[MYCONTROLLERNUMBER][INDEX_DIAL], 1);
+#else
+  setSpeed(0, speeds[1]);
+  setSpeed(1, speeds[1]);
+  setSpeed(2, speeds[1]);
+#endif
 }
 
 void onPressDial3(LitSwitch *btn)
 {
-  setSpeed(controlToTree[myControllerNumber][INDEX_DIAL], 8);
+#if MYCONTROLLERNUMBER == 0
+  setAnimation(controlToTree[MYCONTROLLERNUMBER][INDEX_DIAL], 2);
+#else
+  setSpeed(0, speeds[2]);
+  setSpeed(1, speeds[2]);
+  setSpeed(2, speeds[2]);
+#endif
 }
 
 void onPressDial4(LitSwitch *btn)
 {
-  setSpeed(controlToTree[myControllerNumber][INDEX_DIAL], 15);
+#if MYCONTROLLERNUMBER == 0
+  setAnimation(controlToTree[MYCONTROLLERNUMBER][INDEX_DIAL], 3);
+#else
+  setSpeed(0, speeds[3]);
+  setSpeed(1, speeds[3]);
+  setSpeed(2, speeds[3]);
+#endif
 }
 
 void onPressDial5(LitSwitch *btn)
 {
-  setSpeed(controlToTree[myControllerNumber][INDEX_DIAL], 20);
+#if MYCONTROLLERNUMBER == 0
+  setAnimation(controlToTree[MYCONTROLLERNUMBER][INDEX_DIAL], 4);
+#else
+  setSpeed(0, speeds[4]);
+  setSpeed(1, speeds[4]);
+  setSpeed(2, speeds[4]);
+#endif
 }
 
 void onPressDial6(LitSwitch *btn)
 {
-  setSpeed(controlToTree[myControllerNumber][INDEX_DIAL], 30);
+#if MYCONTROLLERNUMBER == 0
+  setAnimation(controlToTree[MYCONTROLLERNUMBER][INDEX_DIAL], 5);
+#else
+  setSpeed(0, speeds[5]);
+  setSpeed(1, speeds[5]);
+  setSpeed(2, speeds[5]);
+#endif
 }
 
 
 void onPressLever1(LitSwitch *btn)
 {
-  setAnimation(controlToTree[myControllerNumber][INDEX_LEVER], 0);
+  setAnimation(controlToTree[MYCONTROLLERNUMBER][INDEX_LEVER], 0);
 }
 
 void onPressLever2(LitSwitch *btn)
 {
-  setAnimation(controlToTree[myControllerNumber][INDEX_LEVER], 1);
+  setAnimation(controlToTree[MYCONTROLLERNUMBER][INDEX_LEVER], 1);
 }
 
 void onPressLever3(LitSwitch *btn)
 {
-  setAnimation(controlToTree[myControllerNumber][INDEX_LEVER], 2);
+  setAnimation(controlToTree[MYCONTROLLERNUMBER][INDEX_LEVER], 2);
 }
 
 void onPressLever4(LitSwitch *btn)
 {
-  setAnimation(controlToTree[myControllerNumber][INDEX_LEVER], 3);
+  setAnimation(controlToTree[MYCONTROLLERNUMBER][INDEX_LEVER], 3);
 }
 
 void onPressLever5(LitSwitch *btn)
 {
-  setAnimation(controlToTree[myControllerNumber][INDEX_LEVER], 4);
+  setAnimation(controlToTree[MYCONTROLLERNUMBER][INDEX_LEVER], 4);
 }
 
 void onPressLever6(LitSwitch *btn)
 {
-  setAnimation(controlToTree[myControllerNumber][INDEX_LEVER], 5);
+  setAnimation(controlToTree[MYCONTROLLERNUMBER][INDEX_LEVER], 5);
 }
 
 void setup()
@@ -282,12 +359,14 @@ void setup()
   Serial.begin(115200);
   Serial.println(F("JoyGen -- Controller V" VERSIONSTR));
   Serial.print(F("My controller number: "));
-  Serial.println(myControllerNumber);
+  Serial.println(MYCONTROLLERNUMBER);
+#else
+  Serial.end();
 #endif
 
   button1.onPress = onPressButton1;
   button2.onPress = onPressButton2;
-//  button3.onPress = onPressButton3;  // TODO
+  button3.onPress = onPressButton3;
 
   dial1.onPress = onPressDial1;
   dial2.onPress = onPressDial2;
@@ -308,7 +387,7 @@ void setup()
   radio.setPALevel(RF24_PA_MAX);
 
   radio.openWritingPipe(treeAddr[0]);
-  radio.openReadingPipe(1, ctrlAddr[myControllerNumber]);
+  radio.openReadingPipe(1, ctrlAddr[MYCONTROLLERNUMBER]);
 
   radio.startListening();
 }
