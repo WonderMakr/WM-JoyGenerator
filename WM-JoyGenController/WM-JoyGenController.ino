@@ -71,7 +71,7 @@
 #include "RF24.h"
 #include "LitSwitch.h"
 
-#define VERSIONSTR "1.2"
+#define VERSIONSTR "1.3"
 
 #define MYCONTROLLERNUMBER 0
 
@@ -104,8 +104,8 @@
 byte ctrlAddr[][6] = { "1Ctrl", "2Ctrl" };
 byte treeAddr[][6] = { "1Tree", "2Tree", "3Tree" };
 
-byte controlToTree[2][5] = { { 0, 0, 1, 0, 1 },
-                             { 1, 2, 2, 2, 2 } };
+byte controlToTree[2][5] = { { 0, 1, 2, 0, 1 },
+                             { 2, 1, 0, 2, 2 } };
 //0x5D00B2 - purple
 //0xB21700 - red
 //0xFFDD00 - yellow
@@ -214,11 +214,11 @@ void onPressButton2(LitSwitch *btn)
   uint32_t colour;
 
 #if MYCONTROLLERNUMBER == 0
-  colour = secondaryColour[colourIndex];
-  writeToTree(controlToTree[MYCONTROLLERNUMBER][INDEX_BUTTON2], 'c', colour);
-#else
   colour = primaryColour[colourIndex];
   writeToTree(controlToTree[MYCONTROLLERNUMBER][INDEX_BUTTON2], 'a', colour);
+#else
+  colour = secondaryColour[colourIndex];
+  writeToTree(controlToTree[MYCONTROLLERNUMBER][INDEX_BUTTON2], 'c', colour);
 #endif
   colourIndex++;
   if (colourIndex >= COLOURCOUNT)
